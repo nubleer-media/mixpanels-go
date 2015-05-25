@@ -52,6 +52,7 @@ type Mixpanel struct {
 	c       Consumer
 }
 
+const import_endpoint string = "https://api.mixpanel.com/import"
 const events_endpoint string = "https://api.mixpanel.com/track"
 const people_endpoint string = "https://api.mixpanel.com/engage"
 
@@ -130,6 +131,47 @@ func (mp *Mixpanel) Track(distinct_id, event string, prop *P) error {
 	}
 
 	return mp.c.Send("events", data)
+}
+
+/*
+Notes that an event has occurred, along with a distinct_id
+representing the source of that event (for example, a user id),
+an event name describing the event and a set of properties
+describing that event. Properties are provided as a Hash with
+string keys and strings, numbers or booleans as values.
+
+// Track that user "12345"'s credit card was declined
+mp.Track("12345", "Credit Card Declined", nil)
+
+// Properties describe the circumstances of the event,
+// or aspects of the source or user associated with the event
+mp.Track("12345", "Welcome Email Sent", &P{
+  "Email Template" : "Pretty Pink Welcome",
+  "User Sign-up Cohort" : "July 2013",
+ })
+*/
+func (mp *Mixpanel) Import(distinct_id, api_key string, prop *P) error {
+	properties := &P{
+		"distinct_id": distinct_id,
+		//"time":         strconv.FormatInt(time.Now().UTC().Unix(), 10),
+		"mp_lib":       "go",
+		"$lib_version": "0.1",
+	}
+	if prop == nil {
+		prop = &P{}
+	}
+
+	properties.Update(prop)
+
+	data, err := json.Marshal(&Event{
+		Event:      event,
+		Properties: properties,
+	})
+	if err != nil {
+		return err
+	}
+
+	return mp.c.SendWithApiKey("import", api_key, data)
 }
 
 /*
@@ -337,6 +379,7 @@ func NewStdConsumer() *StdConsumer {
 	c.endpoints = make(map[string]string)
 	c.endpoints["events"] = events_endpoint
 	c.endpoints["people"] = people_endpoint
+	c.endpoints["import"] = import_endpoint
 	return c
 }
 
@@ -349,6 +392,15 @@ func (c *StdConsumer) Send(endpoint string, msg []byte) error {
 	}
 }
 
+func (c *StdConsumer) SendWithApiKey(endpoint, api_key string, msg []byte) error {
+
+	if url, ok := c.endpoints[endpoint]; !ok {
+		return errors.New(fmt.Sprintf("No such endpoint '%s'. Valid endpoints are one of %#v", endpoint, c.endpoints))
+	} else {
+		return c.writeWithApiKey(url, api_key, msg)
+	}
+}
+
 func (c *StdConsumer) write(endpoint string, msg []byte) error {
 	track_url, err := url.Parse(endpoint)
 	if err != nil {
@@ -357,6 +409,28 @@ func (c *StdConsumer) write(endpoint string, msg []byte) error {
 
 	q := track_url.Query()
 	q.Add("data", string(b64(msg)))
+	q.Add("verbose", "1")
+
+	track_url.RawQuery = q.Encode()
+
+	resp, err := http.Get(track_url.String())
+
+	if err != nil {
+		return err
+	}
+
+	return parseJsonResponse(resp)
+}
+
+func (c *StdConsumer) writeWithApiKey(endpoint, api_key string, msg []byte) error {
+	track_url, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+
+	q := track_url.Query()
+	q.Add("data", string(b64(msg)))
+	q.Add("api_key", api_key)
 	q.Add("verbose", "1")
 
 	track_url.RawQuery = q.Encode()
