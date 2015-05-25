@@ -172,7 +172,7 @@ func (mp *Mixpanel) Import(distinct_id, event, api_key string, prop *P) error {
 		return err
 	}
 
-	return mp.c.SendWithApiKey("import", api_key, data)
+	return mp.c.SendWithApiKey(event, api_key, data)
 }
 
 /*
