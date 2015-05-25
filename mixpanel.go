@@ -153,9 +153,8 @@ mp.Track("12345", "Welcome Email Sent", &P{
 */
 func (mp *Mixpanel) Import(distinct_id, event, api_key string, dateMilis int64, prop *P) error {
 	properties := &P{
-		"distinct_id": distinct_id,
-		"time":        dateMilis,
-		//"time":         strconv.FormatInt(time.Now().UTC().Unix(), 10),
+		"distinct_id":  distinct_id,
+		"time":         strconv.FormatInt(dateMilis, 10),
 		"mp_lib":       "go",
 		"$lib_version": "0.1",
 	}
@@ -434,8 +433,6 @@ func (c *StdConsumer) writeWithApiKey(endpoint, api_key string, msg []byte) erro
 	q.Add("data", string(b64(msg)))
 	q.Add("api_key", api_key)
 	q.Add("verbose", "1")
-
-	fmt.Println("URL", q)
 
 	track_url.RawQuery = q.Encode()
 
