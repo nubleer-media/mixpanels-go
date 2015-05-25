@@ -434,6 +434,8 @@ func (c *StdConsumer) writeWithApiKey(endpoint, api_key string, msg []byte) erro
 	q.Add("api_key", api_key)
 	q.Add("verbose", "1")
 
+	fmt.Println("URL", q)
+
 	track_url.RawQuery = q.Encode()
 
 	resp, err := http.Get(track_url.String())
