@@ -44,6 +44,7 @@ type Event struct {
 
 type Consumer interface {
 	Send(endpoint string, json_msg []byte) error
+	SendWithApiKey(endpoint, api_key string, json_msg []byte) error
 }
 
 type Mixpanel struct {
