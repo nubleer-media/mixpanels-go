@@ -153,6 +153,7 @@ mp.Track("12345", "Welcome Email Sent", &P{
 */
 func (mp *Mixpanel) Import(distinct_id, event, api_key string, dateMilis int64, prop *P) error {
 	properties := &P{
+		"event":        event,
 		"distinct_id":  distinct_id,
 		"time":         strconv.FormatInt(dateMilis, 10),
 		"mp_lib":       "go",
@@ -172,7 +173,7 @@ func (mp *Mixpanel) Import(distinct_id, event, api_key string, dateMilis int64, 
 		return err
 	}
 
-	return mp.c.SendWithApiKey(event, api_key, data)
+	return mp.c.SendWithApiKey("import", api_key, data)
 }
 
 /*
