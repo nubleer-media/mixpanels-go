@@ -151,9 +151,10 @@ mp.Track("12345", "Welcome Email Sent", &P{
   "User Sign-up Cohort" : "July 2013",
  })
 */
-func (mp *Mixpanel) Import(distinct_id, event, api_key string, prop *P) error {
+func (mp *Mixpanel) Import(distinct_id, event, api_key string, dateMilis int64, prop *P) error {
 	properties := &P{
 		"distinct_id": distinct_id,
+		"time":        dateMilis,
 		//"time":         strconv.FormatInt(time.Now().UTC().Unix(), 10),
 		"mp_lib":       "go",
 		"$lib_version": "0.1",
